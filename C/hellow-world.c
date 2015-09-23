@@ -12,4 +12,5 @@ int main (int argc, char *argv[]){
 	    	string = argv[1];
 	}
 	printf("hello %s!\n", string);
+	return 0;
 }
