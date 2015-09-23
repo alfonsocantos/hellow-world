@@ -1,4 +1,4 @@
 # Examples
 
-This folder contanins C examples
+This folder contains C examples
 
