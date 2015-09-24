@@ -1,3 +1,4 @@
+// http://www.odi.ch/prog/design/newbies.php
 public class HelloWorld {
     public static void main (String[] args){
 	

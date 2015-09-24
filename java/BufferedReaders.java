@@ -1,3 +1,4 @@
+// http://www.odi.ch/prog/design/newbies.php
 /** reading a file using or not BufferedReaders.
 *  (the same for writting)
 */

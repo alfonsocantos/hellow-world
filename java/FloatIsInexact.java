@@ -1,3 +1,4 @@
+// http://www.odi.ch/prog/design/newbies.php
 /**
 *	Don't use Float for work with money calcularions,
 *	just for measurements, not when precision is a req.
