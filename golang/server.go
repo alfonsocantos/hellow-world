@@ -1,10 +1,9 @@
 package main
 
-import {
+import (
 	"net/http"
-
-	"github.com/russross/backfriday"	
-}
+	"io"
+)
 
 func main () {
 	http.HandleFunc ("/markdown", PrintString)
@@ -13,5 +12,5 @@ func main () {
 }
 
 func PrintString (rw http.ResponseWriter, r *http.Request){
-	rw.Write ("Hola Mundo!")
+	io.WriteString (rw, "Hola Mundo!\n")
 }
