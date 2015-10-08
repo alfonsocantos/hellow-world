@@ -15,7 +15,7 @@ class BufferedReaders {
         public static void main (String[] args){
                 try {
                         readFromFile (new File("/dev/zero"));
-			readFromFileBuffered (new File("/dev/zero"));
+			                  readFromFileBuffered (new File("/dev/zero"));
                 } catch (Exception e) {
                         e.printStackTrace();
                 }
@@ -52,4 +52,3 @@ class BufferedReaders {
                 System.out.println("Reading buffered takes " + (System.currentTimeMillis() - started + " ms"));
         }
 }
-
