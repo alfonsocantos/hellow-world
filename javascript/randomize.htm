@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html>
+<body>
+
+<table>
+  <tr>
+    <td>
+      Participantes: <input type="text" id="max" value="10">
+    </td>
+    <td>
+      <button onclick="generarAleatorio()">Generar!</button>
+    </td>
+  </tr>
+</table>
+
+<p id="participantes">
+
+</p>
+<p id="numero" style="
+    width: 290px;
+    font-size:  -webkit-xxx-large;
+    font-family: fantasy;
+    color: #B11818;
+">?</p>
+
+<script>
+function generarAleatorio() {
+    var x = document.getElementById("numero")
+    var max = parseInt(document.getElementById("max").value);
+    x.innerHTML = Math.floor((Math.random() * max) + 1);
+}
+</script>
+
+</body>
+</html>
