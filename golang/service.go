@@ -1,170 +1,174 @@
 package main
 
 import (
-  "fmt"
-  "net/http"
-  "io"
-  "github.com/satori/go.uuid"
-  "math/rand"
-  "os"
-  "strconv"
-  "time"
-  "encoding/json"
-  "crypto/md5"
-)
+	"crypto/md5"
+	"encoding/json"
+	"io"
+	"io/ioutil"
+	"log"
+	"math/rand"
+	"net/http"
+	"os"
+	"strconv"
+	"strings"
+	"time"
 
+	"github.com/satori/go.uuid"
+)
 
 // HelloResponse struct
 type HelloResponse struct {
-  Message string  `json:"message"`
+	Message string `json:"message"`
 }
 
 // UUIDResponse struct
 type UUIDResponse struct {
-  UUID string  `json:"uuid"`
+	UUID string `json:"uuid"`
 }
 
 // AccountResponse struct
 type AccountResponse struct {
-  Code string `json:"code"`
+	Code string `json:"code"`
 }
 
-func main () {
+func main() {
 
-  if b, err := ComputeMd5(os.Args[0]); err == nil {
-    fmt.Printf("version: %x \n", b)
-  }
+	if b, err := ComputeMd5(os.Args[0]); err == nil {
+		log.Printf("version: %x \n", b)
+	}
 
-  port := os.Getenv("PORT")
-  if port == "" {
-    port = "8080"
-  }
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "8080"
+	}
 
-  fmt.Printf("Listening on port %s...\n", port)
+	log.Printf("Listening on port %s...\n", port)
 
-//  http.HandleFunc ("/", BasePath)
-  http.HandleFunc ("/hello", PrintString)
-  http.HandleFunc ("/uuid", PrintUUID)
-  http.HandleFunc ("/accounts", Accounts)
-  http.HandleFunc ("/account", Account)
-  http.HandleFunc ("/404", Error404)
-  http.HandleFunc ("/500", Error500)
-	http.ListenAndServe(":" + port, nil)
+	http.HandleFunc("/basic/hello", getHelloWorld)
+	http.HandleFunc("/basic/uuid", getUUID)
+	http.HandleFunc("/basic/accounts", getAccounts)
+	http.HandleFunc("/basic/account", postAccount)
+	http.HandleFunc("/basic/echo", postEcho)
+	http.HandleFunc("/", getDefault)
+
+	err := http.ListenAndServe(":"+port, nil)
+	if err != nil {
+		log.Println(err)
+	}
 }
 
-// PrintString just prints the json Hola: Mundo! string
-func PrintString (rw http.ResponseWriter, r *http.Request){
-  if RandomizeResponse (rw, r) {
+func getHelloWorld(rw http.ResponseWriter, r *http.Request) {
+	start := time.Now()
 
-    msg, _ := json.Marshal (&HelloResponse{Message: "Hello World!"})
+	randomSleepTime()
 
-    rw.Header().Set("Content-Type", "application/json")
-    rw.WriteHeader(http.StatusOK)
-    io.WriteString (rw, string(msg))
-  }
+	msg, _ := json.Marshal(&HelloResponse{Message: "Hello World!"})
+
+	rw.Header().Set("Content-Type", "application/json")
+	rw.WriteHeader(http.StatusOK)
+	io.WriteString(rw, string(msg))
+
+	elapsed := time.Since(start)
+	log.Printf("%s took %s\n", r.URL, elapsed)
 }
 
-// PrintUUID just prints an UUID string in json
-func PrintUUID (rw http.ResponseWriter, r *http.Request){
-  if RandomizeResponse (rw, r) {
+func getUUID(rw http.ResponseWriter, r *http.Request) {
+	start := time.Now()
 
-    u1, _ := json.Marshal (&UUIDResponse{UUID: uuid.NewV4().String()})
+	randomSleepTime()
 
-    rw.Header().Set("Content-Type", "application/json")
-    rw.WriteHeader(http.StatusOK)
-    io.WriteString (rw, string(u1))
-  }
+	u1, _ := json.Marshal(&UUIDResponse{UUID: uuid.NewV4().String()})
+
+	rw.Header().Set("Content-Type", "application/json")
+	rw.WriteHeader(http.StatusOK)
+	io.WriteString(rw, string(u1))
+
+	elapsed := time.Since(start)
+	log.Printf("%s took %s\n", r.URL, elapsed)
 }
 
-// Account just prints an UUID string in json
-func Account (rw http.ResponseWriter, r *http.Request){
-  if RandomizeResponse (rw, r) {
+func postAccount(rw http.ResponseWriter, r *http.Request) {
+	start := time.Now()
 
-    msg, _ := json.Marshal (&AccountResponse{Code: "ok"})
+	randomSleepTime()
 
-    rw.Header().Set("Content-Type", "application/json")
-    rw.WriteHeader(http.StatusOK)
-    io.WriteString (rw, string (msg))
-  }
+	msg, _ := json.Marshal(&AccountResponse{Code: "ok"})
+
+	rw.Header().Set("Content-Type", "application/json")
+	rw.WriteHeader(http.StatusCreated)
+	io.WriteString(rw, string(msg))
+
+	elapsed := time.Since(start)
+	log.Printf("%s took %s\n", r.URL, elapsed)
 }
 
+func getAccounts(rw http.ResponseWriter, r *http.Request) {
+	start := time.Now()
 
-// Accounts serves the accounts.json file
-func Accounts(rw http.ResponseWriter, r *http.Request) {
-  if RandomizeResponse (rw, r) {
-    fp := "accounts.json"
+	randomSleepTime()
 
-    rw.Header().Set("Content-Type", "application/json")
-    http.ServeFile(rw, r, fp)
-  }
+	data, err := ioutil.ReadFile("accounts.json")
+	if err != nil {
+		log.Println(err)
+		http.Error(rw, "Error sent from golang service", http.StatusTeapot)
+		return
+	}
+
+	u1 := uuid.NewV4().String()
+	dataString := strings.Replace(string(data), "XXXXXXXXX", string(u1)[:rand.Intn(31)], -1)
+	rw.Header().Set("Content-Type", "application/json")
+	io.WriteString(rw, dataString)
+
+	elapsed := time.Since(start)
+	log.Printf("%s took %s\n", r.URL, elapsed)
 }
 
-// Error500 serves the accounts.json file
-func Error500(rw http.ResponseWriter, r *http.Request) {
-  if RandomizeResponse (rw, r) {
-    // 500
-    http.Error(rw, "500 Interval Server Error", http.StatusInternalServerError)
-  }
+func randomSleepTime() {
+	randomMaxTime, _ := strconv.Atoi(os.Getenv("RANDOMMAXTIME"))
+	randomMinTime, _ := strconv.Atoi(os.Getenv("RANDOMMINTIME"))
+
+	if randomMaxTime > 0 {
+		time.Sleep(time.Duration(rand.Intn(randomMaxTime-randomMinTime+1)+randomMinTime) * time.Millisecond)
+	}
 }
 
-// Error404 serves the accounts.json file
-func Error404(rw http.ResponseWriter, r *http.Request) {
-  if RandomizeResponse (rw, r) {
-    http.NotFound(rw, r)
-  }
-}
-
-// BasePath tal
-//func BasePath (rw http.ResponseWriter, r *http.Request) {
-//  http.Redirect (rw, r, "/hello", http.StatusFound)
-//}
-
-// RandomizeResponse prints the body, or erros in a random fashion
-func RandomizeResponse (rw http.ResponseWriter, r *http.Request) bool {
-
-  // Environment variables:
-  // RANDOM404: How many responses are going to be 404
-  // RANDOM500: How many responses are going to be 500
-  // RANDOMSLEEP: Sleep time in miliseconds
-  random404, _ := strconv.Atoi(os.Getenv ("RANDOM404"))
-  random500, _ := strconv.Atoi(os.Getenv ("RANDOM500"))
-  randomMaxTime, _ := strconv.Atoi(os.Getenv ("RANDOMMAXTIME"))
-  randomMinTime, _ := strconv.Atoi(os.Getenv ("RANDOMMINTIME"))
-
-  random500 += random404
-  randomResponse := rand.Intn(100)
-
-  if randomMaxTime > 0 {
-      time.Sleep(time.Duration (rand.Intn(randomMaxTime - randomMinTime) + randomMinTime) * time.Millisecond)
-  }
-
-  result := true
-  if (random404 != 0) && randomResponse <= random404 {
-    // 404
-    http.NotFound(rw, r)
-    result = false
-  } else if (random500 != 0) && randomResponse <= random500{
-    // 500
-    http.Error(rw, "500 Interval Server Error", http.StatusInternalServerError)
-    result = false
-  }
-
-  return result
-}
-
-//ComputeMd5 does it
+//ComputeMd5 does it to know the version of the service
 func ComputeMd5(filePath string) ([]byte, error) {
-  var result []byte
-  file, err := os.Open(filePath)
-  if err != nil {
-    return result, err
-  }
-  defer file.Close()
+	var result []byte
+	file, err := os.Open(filePath)
+	if err != nil {
+		return result, err
+	}
+	defer file.Close()
 
-  hash := md5.New()
-  if _, err := io.Copy(hash, file); err != nil {
-    return result, err
-  }
+	hash := md5.New()
+	if _, err := io.Copy(hash, file); err != nil {
+		return result, err
+	}
 
-  return hash.Sum(result), nil
+	return hash.Sum(result), nil
+}
+
+func getDefault(rw http.ResponseWriter, r *http.Request) {
+	msg := "Sorry, no path registrered in " + r.URL.String() + ". Default Response!	"
+
+	rw.Header().Set("Content-Type", "text/plain")
+	rw.WriteHeader(http.StatusNotFound)
+	io.WriteString(rw, msg)
+
+	log.Printf("not_found %s. \n", r.URL)
+}
+
+func postEcho(rw http.ResponseWriter, r *http.Request) {
+	start := time.Now()
+
+	randomSleepTime()
+
+	dataString, _ := ioutil.ReadAll(r.Body)
+	rw.Header().Set("Content-Type", "application/json")
+	io.WriteString(rw, string(dataString[:]))
+
+	elapsed := time.Since(start)
+	log.Printf("%s took %s\n", r.URL, elapsed)
+
 }
